@@ -42,6 +42,14 @@ class Tools extends Controller
         file_put_contents("../writable/uploads/dhcp.json", json_encode($json));
     }
 
+    public function files() {
+        if (! file_exists("../writable/uploads/dhcp.json")) {
+            echo "Getting File\n";
+            $this->dhcp();
+        }
+        echo "End of Line...\n";
+    }
+
     public function sftp()
     {
         $skip_list = ['hr', 'payroll', 'cis', 'hroffice'];

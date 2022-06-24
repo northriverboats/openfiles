@@ -38,8 +38,7 @@ $routes->set404Override();
 $routes->get('/', 'Home::index');
 $routes->cli('/tools/message/(:segment)', 'Tools::message/$1');
 $routes->cli('/tools/message', 'Tools::message');
-$routes->cli('/tools/sftp', 'Tools::sftp');
-$routes->cli('/tools/ssh', 'Tools::ssh');
+$routes->cli('/tools/files', 'Tools::files');
 $routes->cli('/tools/dhcp', 'Tools::dhcp');
 
 /*
