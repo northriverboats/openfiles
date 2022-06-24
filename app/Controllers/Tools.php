@@ -44,10 +44,12 @@ class Tools extends Controller
 
     public function files() {
         if (! file_exists("../writable/uploads/dhcp.json")) {
-            echo "Getting File\n";
             $this->dhcp();
         }
+        $dhcp_json = file_get_contents('../writable/uploads/dhcp.json');
+        $dhcp = json_decode($dhcp_json);
         echo "End of Line...\n";
+
     }
 
     public function sftp()
