@@ -13,6 +13,35 @@ class Tools extends Controller
         CLI::write("Hello ${to}!");
     }
 
+    public function dhcp() {
+        /* get dhcp list from server and parse to json*/
+        $json = array();
+        $bom = pack('H*','EFBBBF');
+
+        $key = \phpseclib3\Crypt\PublicKeyLoader::load(file_get_contents($_ENV['SSH_KEY']), $password = false);
+        $ssh = new \phpseclib3\Net\SSH2($_ENV['SSH_DHCP_SERVER']);
+        $ssh->login($_ENV['SSH_USER'], $key);
+        $result = $ssh->exec('powershell.exe -command "Get-DHCPServerv4scope |  Get-DHCPServerv4Lease | ConvertTo-CSV -notype | out-file -encoding UTF8  -filepath dhcp.csv');
+
+        $key = \phpseclib3\Crypt\PublicKeyLoader::load(file_get_contents($_ENV['SSH_KEY']), $password = false);
+        $sftp = new \phpseclib3\Net\SFTP($_ENV['SSH_DHCP_SERVER']);
+        $sftp->login($_ENV['SSH_USER'], $key);
+        $raw_csv = $sftp->get('dhcp.csv');
+        $filtered_csv = preg_replace("/^$bom/", '', $raw_csv); // remove utf-8 BOM's from file
+        $csv = explode("\n", $filtered_csv);
+        $header = array_shift($csv);
+        $keys = str_getcsv($header, ",");
+        foreach($csv as $line) {
+            $row = str_getcsv($line, ",");
+            if (count($row) > 1 ) {
+                $name = strtoupper(explode(".", $row[8])[0]);
+                $row[8] = $name ? $name : "UNKNOWN";
+                $json[] = array_combine($keys, $row);
+            }
+        }
+        file_put_contents("../writable/uploads/dhcp.json", json_encode($json));
+    }
+
     public function sftp()
     {
         $skip_list = ['hr', 'payroll', 'cis', 'hroffice'];
