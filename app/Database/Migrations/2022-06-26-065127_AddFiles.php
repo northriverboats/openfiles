@@ -9,6 +9,12 @@ class AddFiles extends Migration
     public function up()
     {
         $this->forge->addField([
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 5,
+                'unsigned' => true,
+                'auto_increment' => true,
+            ],            
             'computer' => [
                 'type' => 'VARCHAR',
                 'constraint' => '30',
@@ -37,6 +43,7 @@ class AddFiles extends Migration
             ],
             'created_at datetime default current_timestamp',
         ]);
+        $this->forge->addPrimaryKey('id');
         $this->forge->createTable('files');
     }
 

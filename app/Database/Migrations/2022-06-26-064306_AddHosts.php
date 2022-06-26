@@ -9,6 +9,12 @@ class AddHosts extends Migration
     public function up()
     {
         $this->forge->addField([
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 5,
+                'unsigned' => true,
+                'auto_increment' => true,
+            ],            
             'ipaddress' => [
                 'type' => 'VARCHAR',
                 'constraint' => '15',
@@ -26,6 +32,7 @@ class AddHosts extends Migration
             ],
             'created_at datetime default current_timestamp',
         ]);
+        $this->forge->addPrimaryKey('id');
         $this->forge->createTable('hosts');
     }
 
