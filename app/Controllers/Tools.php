@@ -18,28 +18,64 @@ class Tools extends Controller
         $json = array();
         $bom = pack('H*','EFBBBF');
 
+        # Connect to server and generate dhcp list as a csv file
         $key = \phpseclib3\Crypt\PublicKeyLoader::load(file_get_contents($_ENV['SSH_KEY']), $password = false);
         $ssh = new \phpseclib3\Net\SSH2($_ENV['SSH_DHCP_SERVER']);
         $ssh->login($_ENV['SSH_USER'], $key);
         $result = $ssh->exec('powershell.exe -command "Get-DHCPServerv4scope |  Get-DHCPServerv4Lease | ConvertTo-CSV -notype | out-file -encoding UTF8  -filepath dhcp.csv');
 
+        # Download the dhcp csv file
         $key = \phpseclib3\Crypt\PublicKeyLoader::load(file_get_contents($_ENV['SSH_KEY']), $password = false);
         $sftp = new \phpseclib3\Net\SFTP($_ENV['SSH_DHCP_SERVER']);
         $sftp->login($_ENV['SSH_USER'], $key);
         $raw_csv = $sftp->get('dhcp.csv');
-        $filtered_csv = preg_replace("/^$bom/", '', $raw_csv); // remove utf-8 BOM's from file
+
+        # remove utf-8 BOM's from csv file
+        $filtered_csv = preg_replace("/^$bom/", '', $raw_csv);
+
+        # split csv file into individale lines as an array
         $csv = explode("\n", $filtered_csv);
+
+        foreach($csv as $line) {
+            $row = str_getcsv(strtolower($line), ",");
+            $ip = substr(str_pad($row[0], 20, " "), 0, 16);
+            if (count($row)>6) {
+                if ($row[8]) {
+                    $host = explode(".", $row[8])[0];
+                } else {
+                    $host = 'Unknown';
+                }
+                if (strtolower($host)=="bad_address") {
+                    $host = "Unknown";
+                }
+                echo $ip ." " . $host, "\n";
+            }
+        }
+
+        return ;
+
+
+        # extract first row and use for keys/column names
         $header = array_shift($csv);
-        $keys = str_getcsv($header, ",");
+        $keys = str_getcsv(strtolower($header), ",");
+
+        # convert each valid line of the csv file into key/value
         foreach($csv as $line) {
             $row = str_getcsv($line, ",");
             if (count($row) > 1 ) {
                 $name = strtoupper(explode(".", $row[8])[0]);
                 $row[8] = $name ? $name : "UNKNOWN";
-                $json[] = array_combine($keys, $row);
+                if ($row[8] == 'BAD_ADDRESS') {
+                    $row[8] = "UNKNOWN";
+                }
+                $json[$row[8]] = array_combine($keys, $row);
             }
         }
+
+        # save dhcp as json
         file_put_contents("../writable/uploads/dhcp.json", json_encode($json));
+
+        return json_encode(['status'=>'ok']);
     }
 
     public function files() {
@@ -47,9 +83,16 @@ class Tools extends Controller
             $this->dhcp();
         }
         $dhcp_json = file_get_contents('../writable/uploads/dhcp.json');
-        $dhcp = json_decode($dhcp_json);
-        echo "End of Line...\n";
+        $dhcp = json_decode($dhcp_json, true);
+        $keys = array_keys($dhcp);
 
+
+
+
+
+        // file_put_contents("../writable/uploads/openfiles.json", json_encode($json));
+
+        return json_encode(['status'=>'ok']);
     }
 
     public function sftp()
