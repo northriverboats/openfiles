@@ -18,13 +18,13 @@ class AddHosts extends Migration
             'ipaddress' => [
                 'type' => 'VARCHAR',
                 'constraint' => '15',
-                'null' => false
-            ],
-            'hostnmae' => [
-                'type' => 'VARCHAR',
-                'constraint' => '30',
                 'null' => false,
                 'unique' => true
+            ],
+            'hostname' => [
+                'type' => 'VARCHAR',
+                'constraint' => '30',
+                'null' => false
             ],
             'updated_at' => [
                 'type' => 'datetime',

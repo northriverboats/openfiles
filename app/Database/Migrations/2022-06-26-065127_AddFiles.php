@@ -24,7 +24,6 @@ class AddFiles extends Migration
                 'type' => 'VARCHAR',
                 'constraint' => '2048',
                 'null' => false,
-                'unique' => true
             ],
             'share' => [
                 'type' => 'VARCHAR',
@@ -35,7 +34,11 @@ class AddFiles extends Migration
                 'type' => 'VARCHAR',
                 'constraint' => '32',
                 'null' => false,
-                'unique' => true
+            ],
+            'type' => [
+                'type' => 'VARCHAR',
+                'constraint' => '32',
+                'null' => false,
             ],
             'updated_at' => [
                 'type' => 'datetime',
