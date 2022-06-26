@@ -15,7 +15,11 @@ class Tools extends Controller
         CLI::write("Hello ${to}!");
     }
 
-    public function dhcp() {
+    public function getOpenFilesList() {
+        // convert db to json
+    }
+
+    public function updateDhcpList() {
         /* get dhcp list from server and parse to json*/
         $bom = pack('H*','EFBBBF');
 
@@ -70,24 +74,7 @@ class Tools extends Controller
         return json_encode(['status'=>'ok']);
     }
 
-    public function files() {
-        if (! file_exists("../writable/uploads/dhcp.json")) {
-            $this->dhcp();
-        }
-        $dhcp_json = file_get_contents('../writable/uploads/dhcp.json');
-        $dhcp = json_decode($dhcp_json, true);
-        $keys = array_keys($dhcp);
-
-
-
-
-
-        // file_put_contents("../writable/uploads/openfiles.json", json_encode($json));
-
-        return json_encode(['status'=>'ok']);
-    }
-
-    public function sftp()
+    public function updateFilesList()
     {
         $skip_list = ['hr', 'payroll', 'cis', 'hroffice'];
 
