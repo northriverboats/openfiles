@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Controller;
+use App\Models\FileModel;
+use App\Models\HostModel;
 
 class Tools extends Controller
 {
@@ -15,7 +17,6 @@ class Tools extends Controller
 
     public function dhcp() {
         /* get dhcp list from server and parse to json*/
-        $json = array();
         $bom = pack('H*','EFBBBF');
 
         # Connect to server and generate dhcp list as a csv file
@@ -36,9 +37,11 @@ class Tools extends Controller
         # split csv file into individale lines as an array
         $csv = explode("\n", $filtered_csv);
 
+        $header = array_shift($csv);
+        $hosts = [];
         foreach($csv as $line) {
             $row = str_getcsv(strtolower($line), ",");
-            $ip = substr(str_pad($row[0], 20, " "), 0, 16);
+            $ip = $row[0];
             if (count($row)>6) {
                 if ($row[8]) {
                     $host = explode(".", $row[8])[0];
@@ -48,33 +51,22 @@ class Tools extends Controller
                 if (strtolower($host)=="bad_address") {
                     $host = "Unknown";
                 }
-                echo $ip ." " . $host, "\n";
+                $hosts[] = ['ipaddress'=>$ip, 'hostname'=>$host];
             }
         }
 
-        return ;
+        // stubing in database
+        $hostModel = new HostModel();
+        $hostModel->transStart();
+        $hostModel->truncate();
+        $hostModel->insertBatch($hosts);
+        $hostModel->transComplete();
 
-
-        # extract first row and use for keys/column names
-        $header = array_shift($csv);
-        $keys = str_getcsv(strtolower($header), ",");
-
-        # convert each valid line of the csv file into key/value
-        foreach($csv as $line) {
-            $row = str_getcsv($line, ",");
-            if (count($row) > 1 ) {
-                $name = strtoupper(explode(".", $row[8])[0]);
-                $row[8] = $name ? $name : "UNKNOWN";
-                if ($row[8] == 'BAD_ADDRESS') {
-                    $row[8] = "UNKNOWN";
-                }
-                $json[$row[8]] = array_combine($keys, $row);
-            }
+        if ($hostModel->transStatus() === false) {
+            // generate an error... or use the log_message() function to log your error
         }
 
-        # save dhcp as json
-        file_put_contents("../writable/uploads/dhcp.json", json_encode($json));
-
+        // $this->respondCreated();
         return json_encode(['status'=>'ok']);
     }
 
@@ -112,15 +104,17 @@ class Tools extends Controller
             'photos' => 'U:\\',
         ];
 
-        $json = array();
+        $hostModel = new HostModel();
 
         $key = \phpseclib3\Crypt\PublicKeyLoader::load(file_get_contents($_ENV['SSH_KEY']), $password = false);
-        $sftp = new \phpseclib3\Net\SFTP($_ENV['SSH_SERVER']);
+        $sftp = new \phpseclib3\Net\SFTP($_ENV['SSH_FILE_SERVER']);
         $sftp->login($_ENV['SSH_USER'], $key);
         $files = $sftp->get('files.csv');
         $rows = str_getcsv($files, "\n");
         $keys = array_shift($rows);
         $key = str_getcsv($keys);
+
+        $files =[];
 
         foreach($rows as $row) {
             $original = str_getcsv($row);
@@ -133,7 +127,10 @@ class Tools extends Controller
                         break;
                     case "ip":
                         $state = "user";
-                        $item["computer"] = "unknown";
+                        $hostModel->where('ipaddress', $segment);
+                        $query = $hostModel->get();
+                        $hostInfo = $query->getResult();
+                        $item["computer"] = $hostInfo ? $hostInfo[0]->hostname : 'Unknown';
                         break;
                     case "user":
                         $item["user"] = substr($segment, 11);
@@ -165,15 +162,16 @@ class Tools extends Controller
             
                 }
             }
-            $json[] = $item;
-            /*
-            if ($item["type"]=='file' ) {
-                echo str_pad($item["user"],12, " ") .str_pad($item["type"], 8, " ") .str_pad($item["share"], 12, " ") .$item["file"]."\n";
-                # echo $output . "\n\n";
-            }
-            */
+            $files[] = $item;
         }
-        return json_encode($json);
-    }
+        // stubing in database
+        $fileModel = new FileModel();
+        $fileModel->transStart();
+        $fileModel->truncate();
+        $fileModel->insertBatch($files);
+        $fileModel->transComplete();
 
+        // $this->respondCreated();
+        return json_encode(['status'=>'ok']);
+    }
 }
