@@ -38,9 +38,8 @@ $routes->set404Override();
 $routes->get('/', 'Home::index');
 $routes->cli('/tools/message/(:segment)', 'Tools::message/$1');
 $routes->cli('/tools/message', 'Tools::message');
-$routes->cli('/tools/getOpenFilesList', 'Tools::getOpenFilesList');
-$routes->cli('/tools/updateDhcpList', 'Tools::updateDhcpList');
-$routes->cli('/tools/updateFilesList', 'Tools::updateFilesList');
+$routes->resource('api/files', ['controller' => 'Api\File', 'only' => ['index', 'update']]);
+$routes->resource('api/hosts', ['controller' => 'Api\Host', 'only' => ['index', 'update']]);
 
 /*
  * --------------------------------------------------------------------
