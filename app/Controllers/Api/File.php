@@ -86,6 +86,13 @@ class File extends ResourceController
 
         $hostModel = new HostModel();
 
+        # Connect to server and generate openfiles list as a csv file
+        $key = \phpseclib3\Crypt\PublicKeyLoader::load(file_get_contents($_ENV['SSH_KEY']), $password = false);
+        $ssh = new \phpseclib3\Net\SSH2($_ENV['SSH_DHCP_SERVER']);
+        $ssh->login($_ENV['SSH_USER'], $key);
+        $result = $ssh->exec('powershell.exe -command "& {Get-SmbOpenFile} | ConvertTo-Csv -notype | out-file -encoding UTF8 -filepath files.csv"');
+
+
         $key = \phpseclib3\Crypt\PublicKeyLoader::load(file_get_contents($_ENV['SSH_KEY']), $password = false);
         $sftp = new \phpseclib3\Net\SFTP($_ENV['SSH_FILE_SERVER']);
         $sftp->login($_ENV['SSH_USER'], $key);
