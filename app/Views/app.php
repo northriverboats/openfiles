@@ -22,6 +22,21 @@
     <div v-scope="{ count: 0 }">
       {{ count }}
       <button @click="count++">inc</button>
+      <div class="overflow-x-auto">
+      <table class="table table-compact w-full">
+          <!-- head -->
+          <thead>
+            <tr>
+              <th></th>
+              <th>Share</th>
+              <th>User</th>
+              <th>File</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
     </div>
     <script type="module" src="js/app.js"></script>
   </body>
