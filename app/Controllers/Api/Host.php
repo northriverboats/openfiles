@@ -107,7 +107,7 @@ class Host extends ResourceController
             }
         }
 
-        // stubing in database
+        // save in database
         $hostModel = new HostModel();
         $hostModel->transStart();
         $hostModel->truncate();
