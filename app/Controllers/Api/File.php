@@ -19,7 +19,10 @@ class File extends ResourceController
         $fileModel->select('computer, file, share, user, type');
         $query = $fileModel->get();
         $files = $query->getResultArray();
-        return $this->respond($files);
+        return $this->respond([
+            'count'=>sizeof($files),
+            'data'=>$files
+        ]);
     }
 
     /**
