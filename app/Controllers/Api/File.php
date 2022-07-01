@@ -17,6 +17,7 @@ class File extends ResourceController
     {
         $fileModel = new FileModel();
         $fileModel->select('computer, file, share, user, type');
+	$fileModel->where('type <>', '');
         $query = $fileModel->get();
         $files = $query->getResultArray();
         return $this->respond([
